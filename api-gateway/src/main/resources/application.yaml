@@ -1,17 +1,84 @@
 spring:
   application:
     name: api-gateway
-cloud:
-   gateway:
-     server:
-       webflux:
-         discovery:
-           locator:
-             enabled: true
-             lower-case-service-id: true
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+
+          routes:
+             - id: payment-service
+               uri: lb://PAYMENT-SERVICE
+               predicates:
+                 - Path=/payments/**
+               filters:
+                - RewritePath=/payments/?(?<remaining>.*), /$\{remaining}
+
+             - id: notification-service
+               uri: lb://NOTIFICATION-SERVICE
+               predicates:
+                 - Path=/notifications/**
+               filters:
+               - RewritePath=/notifications/?(?<remaining>.*), /$\{remaining}
+
+             - id: wallet-service
+               uri: lb://WALLET-SERVICE
+               predicates:
+                 - Path=/wallets/**
+               filters:
+               - RewritePath=/wallets/?(?<remaining>.*), /$\{remaining}
+
+             - id: transaction-service
+               uri: lb://TRANSACTION-SERVICE
+               predicates:
+                 - Path=/transactions/**
+               filters:
+                 - RewritePath=/transactions/?(?<remaining>.*), /$\{remaining}
+
+             - id: user-service
+               uri: lb://USER-SERVICE
+               predicates:
+                 - Path=/users/**
+               filters:
+                 - RewritePath=/users/?(?<remaining>.*), /$\{remaining}
+
+             - id: auth-service
+               uri: lb://AUTH-SERVICE
+               predicates:
+                 - Path=/auth/**
+               filters:
+                 - RewritePath=/auth/?(?<remaining>.*), /$\{remaining}
+
 server:
-  port: 8082
+  port: 8088
+
 eureka:
-  client:
-    service-url:
+    instance:
+      prefer-ip-address: true
+      hostname: localhost
+    client:
+     service-url:
       defaultZone: http://localhost:8761/eureka
+
+management:
+  endpoint:
+    gateway:
+      access: read_only
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: "Api Gateway"
+    description: "This is api gateway for common entry point"
+    version: "1.0V"
