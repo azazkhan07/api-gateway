@@ -33,10 +33,12 @@ public class SecurityConfig {
                         .permitAll()
                         .pathMatchers("/actuator/health")
                         .permitAll()
+
+                        .pathMatchers(HttpMethod.POST, "/api/v1/payments/razorpay/webhook")
+                        .permitAll()
                         .anyExchange()
                         .authenticated())
-                        .oauth2ResourceServer(oauth2 ->
-                                 oauth2.authenticationEntryPoint(securityExceptionHandler)
+                        .oauth2ResourceServer(oauth2 -> oauth2.authenticationEntryPoint(securityExceptionHandler)
                                 .accessDeniedHandler(securityExceptionHandler)
                                 .jwt(jwt -> jwt.authenticationManager(redisBlacklistAuthenticationManager)))
                                 .build();
