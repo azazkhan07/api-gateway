@@ -1,0 +1,76 @@
+name: API Gateway CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-gateway-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout API Gateway source
+        uses: actions/checkout@v4
+
+      - name: Checkout Config Server source
+        uses: actions/checkout@v4
+        with:
+          repository: azazkhan07/config-server
+          path: config-server
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: api-gateway/pom.xml
+
+      - name: Build Config Server Docker image
+        run: docker build -t novapay-config-server:ci ./config-server/config-server
+
+      - name: Start Config Server
+        run: |
+          docker run -d \
+            --name config-server \
+            -p 8089:8089 \
+            -e EUREKA_CLIENT_ENABLED=false \
+            -e EUREKA_CLIENT_REGISTER_WITH_EUREKA=false \
+            -e EUREKA_CLIENT_FETCH_REGISTRY=false \
+            novapay-config-server:ci
+
+      - name: Wait for Config Server
+        run: |
+          for i in {1..60}; do
+            if curl --fail --silent http://localhost:8089/actuator/health; then
+              echo "Config Server is responding."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Config Server did not become ready."
+          docker logs config-server
+          exit 1
+
+      - name: Run Maven tests
+        working-directory: ./api-gateway
+        env:
+          CONFIG_SERVER_URL: http://localhost:8089/
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: ./mvnw --batch-mode --no-transfer-progress clean verify
+
+      - name: Build API Gateway Docker image
+        run: docker build -t api-gateway:${{ github.sha }} ./api-gateway
