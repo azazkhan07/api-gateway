@@ -39,6 +39,13 @@ jobs:
           cache: maven
           cache-dependency-path: api-gateway/pom.xml
 
+      - name: Inspect Config Server checkout
+        run: |
+          echo "Config Server checkout:"
+          ls -la ./config-server
+          echo "Dockerfiles found:"
+          find ./config-server -type f -name Dockerfile -print
+
       - name: Build Config Server Docker image
         run: docker build -t novapay-config-server:ci ./config-server/config-server
 
