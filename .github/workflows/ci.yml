@@ -47,7 +47,7 @@ jobs:
           find ./config-server -type f -name Dockerfile -print
 
       - name: Build Config Server Docker image
-        run: docker build -t novapay-config-server:ci ./config-server/config-server
+        run: docker build -t novapay-config-server:ci ./config-server
 
       - name: Start Config Server
         run: |
