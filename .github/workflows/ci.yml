@@ -77,7 +77,7 @@ jobs:
         env:
           CONFIG_SERVER_URL: http://localhost:8089/
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        run: ./mvnw --batch-mode --no-transfer-progress clean verify
+        run: bash ./mvnw --batch-mode --no-transfer-progress clean verify
 
       - name: Build API Gateway Docker image
         run: docker build -t api-gateway:${{ github.sha }} ./api-gateway
